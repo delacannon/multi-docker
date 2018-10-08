@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t delacannon/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run delacannon/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t delacannon/multi-client ./client 
+  - docker build -t delacannon/multi-nginx ./nginx
+  - docker build -t delacannon/multi-server ./server 
+  - docker build -t delacannon/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASS" | docker login -u "$DOCKER_ID" -- password-stdin
+  # Takke those images and push the to docker hub
+  - docker push delacannon/multi-client
+  - docker push delacannon/multi-nginx
+  - docker push delacannon/multi-server
+  - docker push delacannon/multi-worker
+
